@@ -1,3 +1,18 @@
+// src/app/admin/train/page.jsx
+
+// 1. تعريف المكون (Component)
+function TrainPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">صفحة تدريب الأدمن</h1>
+      {/* محتوى الصفحة الخاص بكِ هنا */}
+    </div>
+  );
+}
+
+// 2. التصدير الافتراضي (هذا هو السطر الناقص أو الخاطئ في مشروعك)
+export default TrainPage;
+
 // // http://localhost:3000/admin/train
 // "use client";
 // import React, { useState, useRef, useEffect } from "react";
