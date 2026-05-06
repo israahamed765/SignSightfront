@@ -40,45 +40,46 @@ export default function RegisterPage() {
   };
 
   return (
-    // تقليل الـ p-4 إلى p-2 لزيادة المساحة المتاحة
-    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] p-2">
-      {/* تقليل max-w إلى 400px وتقليل الـ padding والـ space-y */}
-      <div className="w-full max-w-[400px] bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-xl space-y-3">
-        {/* Header - تقليل المسافات */}
+    // استخدام bg-background بدلاً من اللون الثابت لدعم الـ Dark Mode
+    <div className="min-h-screen flex items-center justify-center bg-background p-2 transition-colors duration-300">
+      {/* استخدام bg-card و border-border */}
+      <div className="w-full max-w-[400px] bg-card p-5 md:p-6 rounded-2xl border border-border shadow-xl space-y-3 text-card-foreground">
+        {/* Header */}
         <div className="text-center space-y-0.5">
-          <div className="flex justify-center items-center gap-2 text-[#f67d31] mb-1">
-            <div className="p-1.5 bg-orange-50 rounded-lg">
-              <span className="material-symbols-outlined text-xl">
-                visibility
+          <div className="flex justify-center items-center gap-2 text-primary mb-1">
+            <div className="flex items-center justify-center size-10 rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+              <span className="material-symbols-outlined text-2xl font-bold">
+                sign_language
               </span>
             </div>
-            <h1 className="text-lg font-black text-slate-900">SignSight</h1>
+            <h1 className="text-lg font-black text-foreground">SignSight</h1>
           </div>
-          <h2 className="text-lg font-bold text-slate-900 leading-tight">
+          <h2 className="text-lg font-bold text-foreground leading-tight">
             إنشاء حساب جديد
           </h2>
-          <p className="text-slate-500 text-[10px]">
+          <p className="text-muted-foreground text-[10px]">
             ابدأ رحلتك مع SignSight اليوم
           </p>
         </div>
 
-        {/* Form - تقليل الـ space-y بين الحقول */}
+        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-2.5">
           {/* حقل اسم المستخدم */}
           <div className="space-y-0.5">
-            <label className="text-[11px] font-semibold text-slate-700 mr-1">
+            <label className="text-[11px] font-semibold text-foreground mr-1">
               اسم المستخدم
             </label>
             <div className="relative">
               <input
                 {...register("username")}
-                className={`w-full h-9 rounded-xl border ${errors.username ? "border-red-500" : "border-slate-200"} bg-white px-9 text-xs outline-none focus:border-[#f67d31] transition-all`}
+                // استخدام bg-input و text-foreground و focus:border-primary
+                className={`w-full h-9 rounded-xl border ${errors.username ? "border-destructive" : "border-border"} bg-input px-9 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all text-foreground`}
                 placeholder="أدخل اسمك"
               />
-              <User className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+              <User className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
             </div>
             {errors.username && (
-              <p className="text-[9px] text-red-500 mr-1">
+              <p className="text-[9px] text-destructive mr-1">
                 {errors.username.message}
               </p>
             )}
@@ -86,20 +87,20 @@ export default function RegisterPage() {
 
           {/* حقل الإيميل */}
           <div className="space-y-0.5">
-            <label className="text-[11px] font-semibold text-slate-700 mr-1">
+            <label className="text-[11px] font-semibold text-foreground mr-1">
               البريد الإلكتروني
             </label>
             <div className="relative">
               <input
                 {...register("email")}
-                className={`w-full h-9 rounded-xl border ${errors.email ? "border-red-500" : "border-slate-200"} bg-white px-9 text-xs outline-none focus:border-[#f67d31] transition-all`}
+                className={`w-full h-9 rounded-xl border ${errors.email ? "border-destructive" : "border-border"} bg-input px-9 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all text-foreground`}
                 placeholder="example@domain.com"
                 dir="ltr"
               />
-              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
             </div>
             {errors.email && (
-              <p className="text-[9px] text-red-500 mr-1">
+              <p className="text-[9px] text-destructive mr-1">
                 {errors.email.message}
               </p>
             )}
@@ -107,20 +108,20 @@ export default function RegisterPage() {
 
           {/* حقل كلمة المرور */}
           <div className="space-y-0.5">
-            <label className="text-[11px] font-semibold text-slate-700 mr-1">
+            <label className="text-[11px] font-semibold text-foreground mr-1">
               كلمة المرور
             </label>
             <div className="relative">
               <input
                 {...register("password")}
                 type="password"
-                className={`w-full h-9 rounded-xl border ${errors.password ? "border-red-500" : "border-slate-200"} bg-white px-9 text-xs outline-none focus:border-[#f67d31] transition-all`}
+                className={`w-full h-9 rounded-xl border ${errors.password ? "border-destructive" : "border-border"} bg-input px-9 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all text-foreground`}
                 placeholder="••••••••"
               />
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
             </div>
             {errors.password && (
-              <p className="text-[9px] text-red-500 mr-1">
+              <p className="text-[9px] text-destructive mr-1">
                 {errors.password.message}
               </p>
             )}
@@ -128,20 +129,20 @@ export default function RegisterPage() {
 
           {/* تأكيد كلمة المرور */}
           <div className="space-y-0.5">
-            <label className="text-[11px] font-semibold text-slate-700 mr-1">
+            <label className="text-[11px] font-semibold text-foreground mr-1">
               تأكيد كلمة المرور
             </label>
             <div className="relative">
               <input
                 {...register("confirmPassword")}
                 type="password"
-                className={`w-full h-9 rounded-xl border ${errors.confirmPassword ? "border-red-500" : "border-slate-200"} bg-white px-9 text-xs outline-none focus:border-[#f67d31] transition-all`}
+                className={`w-full h-9 rounded-xl border ${errors.confirmPassword ? "border-destructive" : "border-border"} bg-input px-9 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all text-foreground`}
                 placeholder="••••••••"
               />
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
             </div>
             {errors.confirmPassword && (
-              <p className="text-[9px] text-red-500 mr-1">
+              <p className="text-[9px] text-destructive mr-1">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -150,7 +151,8 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full h-10 bg-[#f67d31] text-white font-bold rounded-xl hover:bg-[#e06b23] transition-all flex items-center justify-center gap-2 mt-1 shadow-md shadow-orange-100 text-sm"
+            // استخدام bg-primary و text-primary-foreground
+            className="w-full h-10 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-1 shadow-md shadow-primary/20 text-sm"
           >
             {isPending ? (
               <Loader2 className="animate-spin w-4 h-4" />
@@ -160,18 +162,19 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        {/* فاصل التسجيل عبر التواصل الاجتماعي - تقليل الهوامش */}
+        {/* فاصل التسجيل عبر التواصل الاجتماعي */}
         <div className="relative py-1">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-100"></span>
+            <span className="w-full border-t border-border"></span>
           </div>
-          <div className="relative flex justify-center text-[9px] uppercase font-medium text-slate-400 bg-white px-2">
+          <div className="relative flex justify-center text-[9px] uppercase font-medium text-muted-foreground bg-card px-2">
             أو سجل عبر
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-2 h-9 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-all">
+          <button className="flex items-center justify-center gap-2 h-9 rounded-xl border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-all">
+            {/* أيقونة جوجل تظل كما هي بألوانها الأصلية */}
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -192,7 +195,7 @@ export default function RegisterPage() {
             </svg>
             جوجل
           </button>
-          <button className="flex items-center justify-center gap-2 h-9 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-all">
+          <button className="flex items-center justify-center gap-2 h-9 rounded-xl border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-all">
             <svg
               className="w-3.5 h-3.5 text-[#1877F2]"
               fill="currentColor"
@@ -204,11 +207,11 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        <p className="text-center text-[10px] text-slate-500">
+        <p className="text-center text-[10px] text-muted-foreground">
           لديك حساب بالفعل؟{" "}
           <Link
             href="/login"
-            className="font-bold text-[#f67d31] hover:underline"
+            className="font-bold text-primary hover:underline"
           >
             سجل دخولك
           </Link>

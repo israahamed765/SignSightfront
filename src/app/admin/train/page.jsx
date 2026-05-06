@@ -1,6 +1,4 @@
-// src/app/admin/train/page.jsx
 
-// 1. تعريف المكون (Component)
 function TrainPage() {
   return (
     <div className="p-6">
