@@ -3,7 +3,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337",
+  baseURL: process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337",
 });
 
 api.interceptors.request.use((config) => {
