@@ -6,7 +6,7 @@ export const useCreateMessageMutation = () => {
   return useMutation({
     mutationFn: async (data) => {
       // هنا نستخدم => وليس :
-      const response = await axios.post("http://localhost:1337/api/contacts", { data });
+      const response = await axios.post("https://signsightbackend2-production.up.railway.app/api/contacts", { data });
       return response.data;
     },
     onSuccess: () => {

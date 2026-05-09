@@ -1,18 +1,22 @@
-//هذا الملف هو "المحرك" الذي يتحدث مع Strapi. سنقوم بضبطه ليرسل التوكن تلقائياً بعد تسجيل الدخول.
-
 import axios from "axios";
 
+// 1. تحديد الرابط الأساسي بناءً على بيئة التشغيل (Railway أو Localhost)
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337",
+  baseURL: process.env.NEXT_PUBLIC_STRAPI_API_URL || "https://signsightbackend2-production.up.railway.app",
 });
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    // للتأكد أننا في المتصفح وليس السيرفر
-    const token = localStorage.getItem("token");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    // 2. تعديل المسميات: استخدمنا في الصفحات السابقة اسم "jwt" بدلاً من "token"
+    const token = localStorage.getItem("jwt"); 
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export default api;

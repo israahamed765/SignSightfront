@@ -42,7 +42,8 @@ const buttonVariants = cva(
 
 const Button = React.forwardRef(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    // إذا كان asChild true، نستخدم Slot لدمج الخصائص دون إنشاء زر جديد
+    // التغيير هنا: إذا كان asChild صحيحاً، نستخدم Slot مباشرة
+    // هذا سيمنع Base UI من إضافة <button> إضافي
     if (asChild) {
       return (
         <Slot
@@ -52,6 +53,15 @@ const Button = React.forwardRef(
         />
       );
     }
+
+    return (
+      <ButtonPrimitive
+        ref={ref}
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      />
+    );
+ 
 
     // الحالة العادية: نستخدم ButtonPrimitive من Base UI
     return (
