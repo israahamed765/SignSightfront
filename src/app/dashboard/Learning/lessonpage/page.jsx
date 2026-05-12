@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, ArrowLeft, Lock } from "lucide-react";
+import { CheckCircle2, ArrowLeft, Lock, List } from "lucide-react";
 import Sidebar from "../../Sidebar/page";
 
 const BASE_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || "https://signsightbackend2-production.up.railway.app";
@@ -11,60 +11,44 @@ const BASE_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || "https://signsightbac
 function LessonsContent() {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
-  // نغير الحالة لتخزين كائنات تحتوي على معرف الدرس ومعرف السجل في Strapi
-  const [completedLessons, setCompletedLessons] = useState([]); 
+  const [completedLessonIds, setCompletedLessonIds] = useState([]);
   const searchParams = useSearchParams();
   const router = useRouter();  
   
   const selectedTitle = searchParams.get("title");
   const currentCategory = searchParams.get("category");
 
-  // 1. جلب التقدم المكتمل من Strapi
   useEffect(() => {
     const fetchUserProgress = async () => {
-      const token = localStorage.getItem("jwt"); 
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : null;
-
-      if (token && user) {
-        try {
-          const response = await fetch(
-            `${BASE_URL}/api/user-progresses?filters[users_permissions_user][id][$eq]=${user.id}&populate=lesson`, 
-            {
-              headers: { "Authorization": `Bearer ${token}` },
-            }
-          );
-          const result = await response.json();
-          if (result.data) {
-            // تخزين البيانات بشكل مفصل: id السجل و id الدرس المرتبط به
-            const progressData = result.data.map(item => ({
-              progressId: item.id,
-              lessonId: item.attributes.lesson.data?.id,
-            }));
-            setCompletedLessons(progressData);
-          }
-        } catch (error) {
-          console.error("Error fetching progress from Strapi:", error);
-        }
+      const token = localStorage.getItem("jwt");
+      if (!token) return;
+      try {
+        const response = await fetch(`${BASE_URL}/api/users/me`, { 
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error("Failed to fetch profile");
+        const userData = await response.json();
+        const progress = userData.completed_lessons || [];
+        setCompletedLessonIds(Array.isArray(progress) ? progress : []);
+      } catch (error) {
+        console.error("Error fetching user progress:", error);
       }
     };
     fetchUserProgress();
   }, []);
 
-  // 2. جلب محتوى الدروس
   useEffect(() => {
     const fetchContent = async () => {
       setLoading(true);
       try {
         const response = await fetch(`${BASE_URL}/api/dictionaries?populate=*&pagination[pageSize]=100`);
         const result = await response.json();
-
         if (result.data) {
           let filteredData = result.data;
           if (currentCategory) {
             filteredData = result.data.filter((lesson) => {
-              const lessonCat = lesson.attributes?.category || lesson.category;
-              return lessonCat === currentCategory;
+              const item = lesson.attributes || lesson;
+              return item.category === currentCategory;
             });
           }
           const sortedLessons = filteredData.sort((a, b) => 
@@ -84,76 +68,31 @@ function LessonsContent() {
   const currentIndex = lessons.findIndex((l) => (l.attributes?.title || l.title) === selectedTitle);
   const currentLesson = lessons[currentIndex];
   const nextLesson = lessons[currentIndex + 1];
-  
-  // التحقق من الإكمال بناءً على مصفوفة الكائنات الجديدة
-  const isCompleted = currentLesson && completedLessons.some(p => p.lessonId === currentLesson.id);
+  const isCompleted = currentLesson && completedLessonIds.includes(currentLesson.id);
 
-  // 3. وظيفة تحديث حالة الإكمال (إنشاء أو حذف)
   const handleToggleComplete = async () => {
     if (!currentLesson) return;
-
     const token = localStorage.getItem("jwt");
     const userStr = localStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : null;
-
-    if (!token || !user) {
-      alert("يرجى تسجيل الدخول لحفظ تقدمك");
-      return;
-    }
-
-    // البحث عن سجل موجود مسبقاً لهذا الدرس
-    const existingProgress = completedLessons.find(p => p.lessonId === currentLesson.id);
-
+    if (!token || !user) { alert("يرجى تسجيل الدخول لحفظ تقدمك"); return; }
+    let updatedList = isCompleted 
+      ? completedLessonIds.filter(id => id !== currentLesson.id)
+      : [...completedLessonIds, currentLesson.id];
     try {
-      if (existingProgress) {
-        // إذا كان الدرس مكتمل مسبقاً -> نقوم بحذف السجل (إلغاء الإكمال)
-        const response = await fetch(`${BASE_URL}/api/user-progresses/${existingProgress.progressId}`, {
-          method: "DELETE",
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-
-        if (response.ok) {
-          setCompletedLessons(prev => prev.filter(p => p.lessonId !== currentLesson.id));
-        }
-      } else {
-        // إذا لم يكن مكتمل -> إنشاء سجل جديد (إكمال الدرس)
-        const response = await fetch(`${BASE_URL}/api/user-progresses`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            data: {
-              isCompleted: true,
-              users_permissions_user: user.id,
-              lesson: currentLesson.id,
-            }
-          }),
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-          setCompletedLessons(prev => [...prev, {
-            progressId: result.data.id,
-            lessonId: currentLesson.id
-          }]);
-        }
-      }
-    } catch (error) {
-      console.error("Error saving progress to Strapi:", error);
-    }
+      const response = await fetch(`${BASE_URL}/api/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ completed_lessons: updatedList }),
+      });
+      if (response.ok) setCompletedLessonIds(updatedList);
+    } catch (error) { console.error("Network Error:", error); }
   };
 
-  const handleNextLesson = () => {
-    if (nextLesson) handleLessonSelect(nextLesson);
-  };
-
-  // حساب النسبة المئوية بناءً على منطق الكائنات الجديد
+  const handleNextLesson = () => { if (nextLesson) handleLessonSelect(nextLesson); };
   const progressPercentage = lessons.length > 0 
-    ? (completedLessons.filter(p => lessons.some(l => l.id === p.lessonId)).length / lessons.length) * 100 
+    ? (lessons.filter(l => completedLessonIds.includes(l.id)).length / lessons.length) * 100 
     : 0;
-    
   const isQuizUnlocked = progressPercentage >= 90;
 
   const handleLessonSelect = (lesson) => {
@@ -162,154 +101,139 @@ function LessonsContent() {
     router.push(`?title=${encodeURIComponent(title)}&category=${encodeURIComponent(category)}`);
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center font-bold text-blue-600">جاري التحميل...</div>;
+  if (loading) return <div className="flex h-screen items-center justify-center font-bold text-primary animate-pulse">جاري التحميل...</div>;
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground" dir="rtl">
+    <div className="flex min-h-screen bg-background relative" dir="rtl">
       <Sidebar />
-      <main className="flex-1 p-8 pt-28 relative">
-        <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+      
+      <main className="flex-1 p-4 md:p-8 pt-24 lg:pt-36 transition-all duration-300">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* قسم المحتوى الرئيسي */}
-          <div className="flex-1 space-y-6">
+          {/* محتوى الدرس */}
+          <div className="lg:col-span-8 space-y-6">
             {currentLesson ? (
-              <Card className="bg-card border-border shadow-xl rounded-3xl overflow-hidden relative border-t-4 border-t-blue-600">
-                {isCompleted && (
-                  <div className="absolute top-4 right-4 z-10 bg-white/90 rounded-full p-1 shadow-lg animate-in zoom-in duration-300">
-                    <CheckCircle2 className="w-10 h-10 text-blue-600" />
-                  </div>
-                )}
-                
-                <CardContent className="space-y-6 p-6">
-                  <div className="w-full h-[450px] bg-black rounded-2xl overflow-hidden relative border border-border">
-                    <video
-                      key={currentLesson.id}
-                      controls autoPlay muted loop playsInline
-                      className="w-full h-full object-contain"
-                      src={`${BASE_URL}${currentLesson.attributes?.video?.[0]?.url || currentLesson.video?.[0]?.url}`}
-                    />
-                  </div>
-
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h1 className="text-3xl font-bold">{currentLesson.attributes?.title || currentLesson.title}</h1>
-                    
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={handleToggleComplete}
-                        className={`flex-1 md:flex-none px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 border-2 ${
-                          isCompleted 
-                          ? "bg-blue-50 border-blue-200 text-blue-600" 
-                          : "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
-                        }`}
-                      >
-                        {isCompleted ? "إلغاء الإكمال" : "تعلمت الدرس"}
-                      </button>
-
-                      {nextLesson && (
-                        <button
-                          onClick={handleNextLesson}
-                          className="flex-1 md:flex-none px-6 py-3 rounded-xl font-bold bg-slate-800 text-white hover:bg-slate-900 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 border-2 border-slate-800"
-                        >
-                          الدرس التالي
-                          <ArrowLeft className="w-4 h-4" /> 
-                        </button>
+              <div className="space-y-6">
+                <Card className="bg-card border-none shadow-2xl rounded-[2.5rem] overflow-hidden border-t-4 border-t-primary">
+                  <CardContent className="p-0 relative">
+                     {isCompleted && (
+                        <div className="absolute top-4 right-4 z-20 bg-white/90 rounded-full p-1 shadow-xl">
+                          <CheckCircle2 className="w-8 h-8 md:w-12 md:h-12 text-primary" />
+                        </div>
                       )}
+                    <div className="aspect-video w-full bg-black">
+                      <video
+                        key={currentLesson.id}
+                        controls autoPlay muted loop playsInline
+                        className="w-full h-full object-contain"
+                        src={`${BASE_URL}${currentLesson.attributes?.video?.data?.[0]?.attributes?.url || currentLesson.attributes?.video?.[0]?.url || ""}`}
+                      />
                     </div>
-                  </div>
-
-                  <div className="grid gap-4">
-                    {(currentLesson.attributes?.description || currentLesson.description)?.split("\n").filter(l => l.trim() !== "").map((step, i) => (
-                      <div key={i} className="flex items-start gap-5 bg-secondary/30 p-5 rounded-2xl border border-border/50 hover:bg-secondary/50 transition-colors">
-                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-md">{i + 1}</div>
-                        <p className="pt-2 leading-relaxed">{step}</p>
+                    
+                    <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight">
+                        {currentLesson.attributes?.title || currentLesson.title}
+                      </h1>
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                          onClick={handleToggleComplete}
+                          className={`flex-1 sm:flex-none px-6 py-3 rounded-2xl font-bold transition-all border-2 ${
+                            isCompleted ? "bg-secondary border-primary/20 text-primary" : "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20"
+                          }`}
+                        >
+                          {isCompleted ? "إلغاء الإكمال" : "تعلمت الدرس"}
+                        </button>
+                        {nextLesson && (
+                          <button
+                            onClick={handleNextLesson}
+                            className="flex-1 sm:flex-none px-6 py-3 rounded-2xl font-bold bg-foreground text-background hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                          >
+                            التالي <ArrowLeft className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(currentLesson.attributes?.description || currentLesson.description)?.split("\n").filter(l => l.trim() !== "").map((step, i) => (
+                    <div key={i} className="flex items-center gap-4 bg-card p-5 rounded-[1.5rem] border border-border shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs shrink-0">{i + 1}</div>
+                      <p className="text-muted-foreground font-bold text-sm leading-snug">{step}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : (
-              <div className="py-32 text-center bg-card rounded-3xl border-2 border-dashed border-border text-muted-foreground">
-                <p className="text-xl">الرجاء اختيار درس من القائمة الجانبية للبدء</p>
+              <div className="h-96 flex items-center justify-center bg-card rounded-[2.5rem] border-2 border-dashed border-border text-muted-foreground font-bold">
+                يرجى اختيار درس من القائمة للبدء
               </div>
             )}
           </div>
 
-          {/* القائمة الجانبية */}
-          <div className="w-full lg:w-80 flex flex-col gap-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
-              قائمة {currentCategory}
-            </h2>
-            
-            <div className="flex-1 space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto pr-2 custom-scrollbar">
-              {lessons.map((lesson, i) => {
-                const item = lesson.attributes || lesson;
-                const isActive = item.title === selectedTitle;
-                const isItemCompleted = completedLessons.some(p => p.lessonId === lesson.id);
-
-                return (
-                  <button
-                    onClick={() => handleLessonSelect(lesson)}
-                    key={lesson.id}
-                    className={`w-full text-right bg-card p-3 rounded-2xl border transition-all flex items-center gap-4 hover:shadow-md ${
-                      isActive ? "border-blue-600 ring-2 ring-blue-100 shadow-sm" : "border-border"
+          {/* القائمة الجانبية والتقدم */}
+          <div className="lg:col-span-4 space-y-6">
+            <Card className="bg-card border-none shadow-xl rounded-[2rem] p-6">
+               <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-black text-foreground">التقدم</h3>
+                    <span className="text-2xl font-black text-primary">{Math.round(progressPercentage)}%</span>
+                  </div>
+                  <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${progressPercentage}%` }}></div>
+                  </div>
+                  <button 
+                    disabled={!isQuizUnlocked}
+                    onClick={() => router.push('/dashboard/Quiz')}
+                    className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-sm shadow-xl transition-all ${
+                      isQuizUnlocked ? "bg-primary text-primary-foreground animate-bounce-slow" : "bg-muted text-muted-foreground cursor-not-allowed"
                     }`}
                   >
-                    <div className="w-12 h-12 bg-secondary rounded-xl flex-shrink-0 flex items-center justify-center relative">
-                       {isItemCompleted && (
-                         <CheckCircle2 className="absolute -top-1 -right-1 w-5 h-5 text-blue-600 fill-white" />
-                       )}
-                       <span className={`text-xs font-bold ${isActive ? "text-blue-600" : ""}`}>
-                         {item.Order || i + 1}
-                       </span>
-                    </div>
-                    <h3 className={`font-bold text-sm truncate ${isActive ? "text-blue-600" : ""}`}>{item.title}</h3>
+                    يفتح الاختبار عند حصولك على 90%  <br></br>
+                    {isQuizUnlocked ? <ArrowLeft className="w-5 h-5" /> : <Lock className="w-4 h-4" />}
+                    انتقل للاختبار النهائي
                   </button>
-                );
-              })}
-            </div>
+               </div>
+            </Card>
 
-            {/* مسار التقدم */}
-            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 shadow-inner">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-bold text-blue-800">مسار التقدم</span>
-                <span className="text-xs font-bold text-blue-600">{Math.round(progressPercentage)}%</span>
-              </div>
-              <div className="w-full h-3 bg-blue-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 transition-all duration-700 ease-out" style={{ width: `${progressPercentage}%` }}></div>
-              </div>
-              <p className="text-[10px] text-blue-500 mt-2 text-center font-medium">
-                أكملت {completedLessons.filter(p => lessons.some(l => l.id === p.lessonId)).length} من أصل {lessons.length} دروس
-              </p>
+            <div className="bg-card rounded-[2.5rem] p-4 shadow-sm border border-border">
+               <h4 className="font-black text-foreground flex items-center gap-2 mb-4 px-2">
+                  <List className="w-5 h-5 text-primary" /> قائمة الدروس
+               </h4>
+               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-3 max-h-[500px] overflow-y-auto no-scrollbar p-1">
+                  {lessons.map((lesson, i) => {
+                    const item = lesson.attributes || lesson;
+                    const isActive = item.title === selectedTitle;
+                    const isItemCompleted = completedLessonIds.includes(lesson.id);
+
+                    return (
+                      <button
+                        key={lesson.id}
+                        onClick={() => handleLessonSelect(lesson)}
+                        className={`text-right p-3 rounded-2xl border-2 transition-all flex items-center gap-3 ${
+                          isActive ? "bg-card border-primary shadow-lg scale-[1.02]" : "bg-card/50 border-transparent hover:border-border"
+                        }`}
+                      >
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 relative ${isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                           {isItemCompleted && <CheckCircle2 className={`absolute -top-1.5 -right-1.5 w-5 h-5 ${isActive ? "text-primary fill-white" : "text-primary/70 fill-white"}`} />}
+                           <span className="text-xs font-black">{item.Order || i + 1}</span>
+                        </div>
+                        <span className={`text-xs font-bold truncate ${isActive ? "text-primary" : "text-muted-foreground"}`}>{item.title}</span>
+                      </button>
+                    );
+                  })}
+               </div>
             </div>
           </div>
-        </div>
 
-        {/* كرت الاختبار */}
-        <div className="fixed bottom-8 left-8 z-50 w-72">
-          <Card className={`shadow-2xl border-2 transition-all duration-500 ${isQuizUnlocked ? "border-blue-400 animate-bounce-slow" : "border-gray-200 opacity-80"}`}>
-            <CardContent className="p-5 text-center space-y-3">
-              {!isQuizUnlocked && <div className="flex justify-center"><Lock className="w-5 h-5 text-gray-400" /></div>}
-              <p className={`font-bold text-sm ${isQuizUnlocked ? "text-blue-900" : "text-gray-400"}`}>
-                {isQuizUnlocked ? "أنت مستعد للاختبار!" : "أكمل 90% لفتح الاختبار"}
-              </p>
-              <button 
-                disabled={!isQuizUnlocked}
-                onClick={() => router.push('/dashboard/Quiz')}
-                className={`w-full py-3 rounded-full flex items-center justify-center gap-2 transition-all font-bold shadow-lg ${isQuizUnlocked ? "bg-[#6366f1] text-white hover:bg-[#4f46e5]" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
-              >
-                <ArrowLeft className="w-5 h-5" /> الانتقال للاختبار
-              </button>
-            </CardContent>
-          </Card>
         </div>
       </main>
 
       <style jsx global>{`
-        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        .animate-bounce-slow { animation: bounce-slow 4s infinite ease-in-out; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .animate-bounce-slow { animation: bounce-slow 3s infinite ease-in-out; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
