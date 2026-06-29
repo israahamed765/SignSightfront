@@ -1,17 +1,33 @@
 import axios from "axios";
+import { STRAPI_URL } from "../../lib/config";
 
-// 1. تحديد الرابط الأساسي بناءً على بيئة التشغيل (Railway أو Localhost)
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_STRAPI_API_URL || "https://signsightbackend2-production.up.railway.app",
+  baseURL: STRAPI_URL,
 });
+
+const PUBLIC_AUTH_PATHS = [
+  "/auth/local",
+  "/auth/local/register",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/request-reset-code",
+  "/auth/verify-reset-code",
+  "/auth/reset-password-otp",
+];
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    // 2. تعديل المسميات: استخدمنا في الصفحات السابقة اسم "jwt" بدلاً من "token"
-    const token = localStorage.getItem("jwt"); 
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const requestUrl = `${config.baseURL || ""}${config.url || ""}`;
+    const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((path) =>
+      requestUrl.includes(path)
+    );
+
+    // لا نرسل JWT على مسارات تسجيل الدخول/التسجيل — يسبب 403 Forbidden في Strapi
+    if (!isPublicAuthRequest) {
+      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
   }
   return config;

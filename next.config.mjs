@@ -1,26 +1,40 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  devIndicators: false,
+
+  // منع Next من اعتبار مجلد SignSight الأب (package.json الجذري) جذر المشروع
+  turbopack: {
+    root: __dirname,
+  },
+  outputFileTracingRoot: __dirname,
+
+  serverExternalPackages: [
+    "@tensorflow/tfjs",
+    "@tensorflow-models/pose-detection",
+    "@mediapipe/pose",
+  ],
+
   typescript: {
-    // هذا السطر يمنع الـ Build من التوقف بسبب أخطاء الـ TS في المكتبات
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // هذا السطر يمنع الـ Build من التوقف بسبب أخطاء الـ ESLint
-    ignoreDuringBuilds: true,
-  },
-  // 1. حل مشكلة TensorFlow و MediaPipe
-  transpilePackages: ["@tensorflow-models/pose-detection", "@mediapipe/pose"],
-  // Next 16 يستخدم Turbopack افتراضياً في dev؛ وجود هذا المفتاح يمنع رسالة التعارض مع webpack config.
-  turbopack: {},
-  // 3. الحفاظ على إعدادات webpack للأدوات التي لا تزال تحتاجها
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
+
+  experimental: {
+    turbo: {
+      resolveAlias: {
         fs: false,
         path: false,
-      };
-    }
+        "@mediapipe/pose": "@mediapipe/pose/pose.js",
+      },
+    },
+  },
+
+  webpack: (config) => {
+    config.resolve.alias["@mediapipe/pose"] = "@mediapipe/pose/pose.js";
     return config;
   },
 };

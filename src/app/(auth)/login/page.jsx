@@ -3,11 +3,15 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation"; 
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import api from "../../../lib/axios"; // تأكدي أن هذا الملف يستخدم التوكن الجديد أيضاً
+import api from "../../../lib/axios";
+import { beginUserSession } from "../../../lib/lessonProgress";
+import { useAuth } from "../../providers/AuthProvider";
+import { getUserDisplayName } from "@/lib/config";
 import { toast, Toaster } from "react-hot-toast";
 
 export default function Login() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,7 +29,12 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // 1. إرسال طلب تسجيل الدخول إلى Strapi
+      // إزالة أي توكن قديم قبل تسجيل الدخول (يمنع خطأ 403 Forbidden)
+      localStorage.removeItem("jwt");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      delete api.defaults.headers.common["Authorization"];
+
       const response = await api.post("/api/auth/local", {
         identifier: formData.identifier,
         password: formData.password,
@@ -34,13 +43,15 @@ export default function Login() {
       if (response.data.jwt) {
         // 2. التخزين الموحد: نستخدم الاسم "jwt" ليتعرف عليه كود صفحة الدروس
         localStorage.setItem("jwt", response.data.jwt);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+        localStorage.setItem("token", response.data.jwt);
+        beginUserSession(response.data.user);
+        setUser(JSON.parse(localStorage.getItem("user")));
 
         // 3. تحديث ترويسة Axios فوراً (مهم جداً لكي تعمل الطلبات التالية مباشرة)
         api.defaults.headers.common["Authorization"] = `Bearer ${response.data.jwt}`;
 
         toast.success(
-          "تم تسجيل الدخول بنجاح! مرحباً بكِ يا " + response.data.user.username,
+          "تم تسجيل الدخول بنجاح! مرحباً بكِ يا " + getUserDisplayName(response.data.user),
           {
             duration: 4000,
             position: "top-center",
@@ -104,6 +115,12 @@ export default function Login() {
               <div className="space-y-1">
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-sm font-medium text-foreground">كلمة المرور</label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    نسيت كلمة المرور؟
+                  </Link>
                 </div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary">

@@ -10,41 +10,38 @@ import {
   CheckCircle2,
   Accessibility,
 } from "lucide-react";
-import Navbar from "../../../components/layout/Navbar";
-import Footer from "../../../components/layout/Footer";
-
-export default function features() {
+export default function FeaturesPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-500">
-      <Navbar />
-
-      <section className="relative container mx-auto px-6 py-20 lg:py-28 overflow-hidden">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
-          <div className="flex-1 space-y-8 text-right">
+    <>
+      {/* تم تعديل الـ padding هنا لتقليل المسافة العلوية والاقتراب من الـ Navbar */}
+      <section className="relative container mx-auto px-6 pt-6 pb-20 lg:pt-10 lg:pb-28 overflow-hidden">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12 items-center">
+          <div className="space-y-5 text-right lg:col-span-1 order-2 lg:order-1">
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold animate-pulse">
               تمكين بلا حدود
             </div>
-            <h1 className="text-5xl lg:text-7xl font-black leading-[1.1] tracking-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.15] tracking-tight">
               مميزات <span className="text-primary">SignSight</span>
             </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed">
               نحن نبني جسور التواصل من خلال تقنيات الذكاء الاصطناعي الأكثر
               تطوراً. منصتنا مصممة لتمكين مجتمع الصم من التفاعل بحرية وسهولة.
             </p>
-            <div className="flex flex-wrap gap-4 pt-4">
-              <button className="px-8 py-4 bg-primary text-primary-foreground rounded-full font-bold text-lg flex items-center gap-3 hover:shadow-[0_0_20px_rgba(246,125,49,0.3)] transition-all group">
+            <div className="flex flex-wrap gap-4 pt-2">
+              <button className="px-6 py-3 bg-primary text-primary-foreground rounded-full font-bold text-base flex items-center gap-3 hover:shadow-[0_0_20px_rgba(246,125,49,0.3)] transition-all group">
                 اكتشف المزيد
                 <ArrowLeft className="group-hover:-translate-x-2 transition-transform" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 relative">
-            <div className="w-full aspect-square rounded-[3rem] bg-secondary overflow-hidden relative shadow-2xl border border-border">
+          <div className="relative lg:col-span-2 order-1 lg:order-2">
+            <div className="w-full aspect-[4/3] lg:aspect-[16/10] rounded-[3rem] bg-secondary overflow-hidden relative shadow-2xl border border-border">
               <img
-                className="w-full h-full object-cover opacity-90"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNHG_BJuzNTTv-ZMh4PiSm_9YOpqUh8NR8CKUXnzXoRUQEnpowY2kDbJGKav01NQNnBRaUmZZo7Zak64hEx8vZtnx4bpIsAnSGOkQC22BoIb9eXPSJEA53LJ4Dt3ibH1ky5Jjr8gYqq3niECAp7a6R-bk5afdCWAU4W-bqSye7LHbgHTE14UdP2pemhdI1_1r292Xzs5TRg-ujlAIyixpK-bSkuuKxUYsL7FOxzCtadyd1Z0OnTczMHQtKrkPq2g7njtMtxCMLOHY"
-                alt="AI Tech Visualization"
+                className="w-full h-full object-cover object-center"
+                src="/images/features-hero.jpg"
+                alt="ترجمة لغة الإشارة بالذكاء الاصطناعي في الوقت الفعلي"
+                loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
               <div className="absolute bottom-6 right-6 bg-card/80 backdrop-blur-md p-4 rounded-2xl border border-border flex items-center gap-3">
@@ -110,6 +107,7 @@ export default function features() {
               <div className="mt-8 flex items-center gap-3 relative z-10">
                 <div className="flex -space-x-3">
                   {[1, 2, 3].map((i) => (
+
                     <div
                       key={i}
                       className="w-10 h-10 rounded-full border-2 border-primary bg-white/20 backdrop-blur-sm"
@@ -167,8 +165,10 @@ export default function features() {
               </div>
               <div className="w-full md:w-1/2">
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNf6wlRthFZ9dIuwQ3r-AismWwN31Ok92hBhJBWVGTu29hNVomN_Snso06Ti9Kee-GXpb9qWiFk1BwHfO2dKCIc054BE4yhSc5I3e6_TzPQOFofdtOG8jATe1AF1CIUr1WSfShRoOiLv0nUdXX6h7MJ_qmtW9u2hHmr3MwNa9juadk8MEkv3-B6MMNeYjN5MO58N_sXgXCCqmh_pHPg41YcXRmBJYPQjc_KkE3r16LjGWPun-ysOGswpOYtQ2Srm8djKDBCAHaw_s"
-                  className="rounded-[2rem] shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500 border-4 border-card"
+                  src="/images/features-accessibility.jpg"
+                  alt="واجهة SignSight سهلة الوصول مع دعم تباين عالٍ وخطوط واضحة"
+                  className="rounded-[2rem] shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500 border-4 border-card w-full object-cover aspect-[4/3]"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -195,7 +195,6 @@ export default function features() {
           </div>
         </div>
       </section>
-      <Footer />
-    </div>
+    </>
   );
 }

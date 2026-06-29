@@ -3,25 +3,29 @@
 import { useMutation } from "@tanstack/react-query";
 import { registerUser } from "../services/auth.api";
 
-import { useRouter } from "next/navigation"; // الميزة الأساسية في Next.js للتنقل
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { beginUserSession } from "../../../lib/lessonProgress";
+import { useAuth } from "../../../app/providers/AuthProvider";
 
 export const useRegister = () => {
-  const router = useRouter(); // تعريف المحرك الخاص بـ Next.js
+  const router = useRouter();
+  const { setUser } = useAuth();
 
   return useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
-      // 1. تخزين التوكن وبيانات المستخدم (كما هو معتاد)
       localStorage.setItem("token", data.jwt);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("jwt", data.jwt);
+      beginUserSession(data.user);
+      setUser(JSON.parse(localStorage.getItem("user")));
 
       // 2. إظهار تنبيه نجاح احترافي (باستخدام الميزة التي ثبتناها)
       toast.success("تم إنشاء حسابك في SignSight بنجاح! 🎉");
 
       // 3. التوجيه باستخدام ميزة Next.js (بدلاً من navigate)
       // سنوجه المستخدم لصفحة البداية أو لوحة التحكم
-      router.push("/");
+    router.push("/dashboard");
 
       // اختيارياً: عمل Refresh لبيانات الصفحة لضمان تحديث حالة الدخول
       router.refresh();

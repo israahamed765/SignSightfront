@@ -1,20 +1,23 @@
-import axios from "../axios";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../axios";
 import toast from "react-hot-toast";
 
+const createMessage = async (payload) => {
+  const response = await api.post("/api/contacts", payload);
+  return response.data;
+};
+
 export const useCreateMessageMutation = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (data) => {
-      // هنا نستخدم => وليس :
-      const response = await axios.post("https://signsightbackend2-production.up.railway.app/api/contacts", { data });
-      return response.data;
-    },
+    mutationFn: createMessage,
     onSuccess: () => {
-      // هنا نستخدم => وليس :
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
       toast.success("تم إرسال رسالتك بنجاح! سنتواصل معك قريباً.");
     },
     onError: (error) => {
-      // هنا نستخدم => وليس :
       toast.error("عذراً، حدث خطأ أثناء الإرسال. حاول مرة أخرى.");
       console.error("Strapi Error:", error.response?.data);
     },

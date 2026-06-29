@@ -8,6 +8,7 @@ import * as z from "zod";
 import { User, Mail, Lock, Loader2 } from "lucide-react";
 import { useRegister } from "../../../features/auth/hooks/useAuth";
 
+
 const registerSchema = z
   .object({
     username: z.string().min(3, "الاسم يجب أن يكون 3 حروف على الأقل"),
@@ -147,7 +148,7 @@ export default function RegisterPage() {
               </p>
             )}
           </div>
-
+         
           <button
             type="submit"
             disabled={isPending}

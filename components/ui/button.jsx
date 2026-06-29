@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
-import { Slot } from "@radix-ui/react-slot"; // تأكد من تثبيت هذه المكتبة: npm install @radix-ui/react-slot
+import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 import { cn } from "../../src/lib/utils";
 
@@ -42,8 +42,6 @@ const buttonVariants = cva(
 
 const Button = React.forwardRef(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    // التغيير هنا: إذا كان asChild صحيحاً، نستخدم Slot مباشرة
-    // هذا سيمنع Base UI من إضافة <button> إضافي
     if (asChild) {
       return (
         <Slot
@@ -54,16 +52,6 @@ const Button = React.forwardRef(
       );
     }
 
-    return (
-      <ButtonPrimitive
-        ref={ref}
-        className={cn(buttonVariants({ variant, size, className }))}
-        {...props}
-      />
-    );
- 
-
-    // الحالة العادية: نستخدم ButtonPrimitive من Base UI
     return (
       <ButtonPrimitive
         ref={ref}

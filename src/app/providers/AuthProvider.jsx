@@ -3,6 +3,10 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../../lib/axios";
 import { useRouter } from "next/navigation";
+import {
+  beginUserSession,
+  endUserSession,
+} from "../../lib/lessonProgress";
 
 const AuthContext = createContext();
 
@@ -13,32 +17,37 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("jwt") || localStorage.getItem("token");
       if (token) {
         try {
-          // محاولة جلب بيانات المستخدم الحالية من Strapi
-          const res = await api.get("/users/me");
+          const res = await api.get("/api/users/me");
+          beginUserSession(res.data);
           setUser(res.data);
         } catch (err) {
-          // إذا فشل التوكن، نقوم بتنظيف المتصفح
-          localStorage.removeItem("token");
+          endUserSession();
+          delete api.defaults.headers.common["Authorization"];
           setUser(null);
         }
+      } else {
+        endUserSession();
+        setUser(null);
       }
       setLoading(false);
     };
     initAuth();
   }, []);
 
-  // دالة تسجيل الخروج لاستخدامها في القائمة العلوية لاحقاً
   const logout = () => {
-    localStorage.removeItem("token");
+    endUserSession();
+    delete api.defaults.headers.common["Authorization"];
     setUser(null);
     router.push("/login");
   };
 
+  const userId = user?.id ? String(user.id) : null;
+
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, logout, userId }}>
       {children}
     </AuthContext.Provider>
   );
